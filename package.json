@@ -1,0 +1,48 @@
+{
+  "name": "@home-assistant-matter-hub/root",
+  "version": "dev",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "enable-remote-caching": "nx login",
+    "cleanup": "nx run-many -t cleanup --parallel 100 && nx reset && npx rimraf .local-storage node_modules",
+    "lint": "nx run-many -t lint && prettier . --check",
+    "lint:fix": "nx run-many -t lint:fix && prettier . --write",
+    "prettier": "prettier . --check",
+    "test": "nx run-many -t test",
+    "build": "nx run-many -t build",
+    "release": "nx release --verbose",
+    "serve": "nx run-many -t serve --output-style=stream --parallel=100",
+    "serve:production": "nx run home-assistant-matter-hub:start --skip-nx-cache",
+    "start": "npm run serve",
+    "check-updates": "npx npm-check-updates --workspaces --root -u"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "utils/*"
+  ],
+  "devDependencies": {
+    "@dotenvx/dotenvx": "^1.38.5",
+    "@eslint/js": "^9.22.0",
+    "@nx/js": "20.5.0",
+    "@swc-node/register": "~1.10.9",
+    "@swc/core": "~1.11.8",
+    "@swc/helpers": "~0.5.15",
+    "esbuild": "^0.25.1",
+    "esbuild-plugin-noexternal": "^0.1.6",
+    "eslint": "^9.22.0",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-prettier": "^5.2.3",
+    "globals": "^16.0.0",
+    "nodemon": "^3.1.9",
+    "nx": "20.5.0",
+    "prettier": "^3.5.3",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.26.1",
+    "vite": "^6.2.1",
+    "vitest": "^3.0.8"
+  }
+}

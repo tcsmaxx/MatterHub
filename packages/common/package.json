@@ -1,0 +1,22 @@
+{
+  "name": "@home-assistant-matter-hub/common",
+  "version": "3.0.0-alpha.76",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "cleanup": "npx rimraf node_modules dist",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "color": "5.0.0"
+  },
+  "devDependencies": {
+    "@types/color": "^4.2.0",
+    "json-schema": "^0.4.0"
+  }
+}

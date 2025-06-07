@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  workflow_dispatch:
+#  schedule:
+#    - cron: "0 2 * * *"
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  pages: write
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          registry-url: https://registry.npmjs.org/
+      - name: NX cache
+        uses: actions/cache@v4
+        with:
+          path: .nx
+          key: ${{ runner.os }}-nx
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: npm ci
+
+      - name: Bumb version
+        id: version
+        run: |
+          PREV_PACKAGE_VERSION=$(node -p "require('home-assistant-matter-hub/package.json').version")
+
+          npx nx release version
+
+          NEXT_PACKAGE_VERSION=$(node -p "require('home-assistant-matter-hub/package.json').version")
+          echo "package-version=$NEXT_PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
+          if [ "$PREV_PACKAGE_VERSION" == "$NEXT_PACKAGE_VERSION" ]; then
+            RELEASE_REQUIRED="no"
+          else
+            RELEASE_REQUIRED="yes"
+          fi
+          echo "Previous version: $PREV_PACKAGE_VERSION, New Version: $NEXT_PACKAGE_VERSION, Release required: $RELEASE_REQUIRED"
+          echo "release-required=$RELEASE_REQUIRED" >> "$GITHUB_OUTPUT"
+
+      - name: Create Changelog
+        id: changelog
+        if: steps.version.outputs.release-required == 'yes'
+        env:
+          PACKAGE_VERSION: ${{steps.version.outputs.package-version}}
+        run: |
+          npx nx release changelog --version $PACKAGE_VERSION
+          CHANGELOG=$(git diff HEAD CHANGELOG.md | sed -n '/^\+/s///p' | sed '1d')
+          echo "changelog<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$CHANGELOG" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        if: steps.version.outputs.release-required == 'yes'
+        run: npx nx run-many -t lint test build
+
+      - name: Prettier
+        if: steps.version.outputs.release-required == 'yes'
+        run: npm run prettier
+
+      - name: Commit, tag and push
+        if: steps.version.outputs.release-required == 'yes'
+        env:
+          PACKAGE_VERSION: ${{steps.version.outputs.package-version}}
+        run: |
+          git commit -m "chore: release v$PACKAGE_VERSION"
+          git tag -a v$PACKAGE_VERSION -m "Release v$PACKAGE_VERSION" -m "[skip ci]"
+          git push --follow-tags
+
+      - name: Publish
+        if: steps.version.outputs.release-required == 'yes'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: false
+        run: npx nx release publish
+
+      - name: Create GitHub Release
+        if: steps.version.outputs.release-required == 'yes'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PACKAGE_VERSION: ${{steps.version.outputs.package-version}}
+          CHANGELOG: ${{steps.changelog.outputs.changelog}}
+        run: |
+          gh release create v$PACKAGE_VERSION \
+            --latest \
+            --notes "$CHANGELOG" \
+            --title "v$PACKAGE_VERSION" \
+            --verify-tag
+
+      - name: Upload Documentation
+        if: steps.version.outputs.release-required == 'yes'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "./packages/docs/_build/html"
+      - name: Deploy documentation to GitHub Pages
+        if: steps.version.outputs.release-required == 'yes'
+        uses: actions/deploy-pages@v4
+
+      - name: Dispatch Addon Repository
+        if: steps.version.outputs.release-required == 'yes'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.ADDON_REPOSITORY_PAT }}
+          repository: "t0bst4r/home-assistant-addons"
+          event-type: release-hamh
+          client-payload: '{ "version": "${{steps.version.outputs.package-version}}" }'

@@ -1,0 +1,107 @@
+{
+  "name": "home-assistant-matter-hub",
+  "description": "",
+  "version": "3.0.0-alpha.76",
+  "private": false,
+  "destination": "./pack",
+  "type": "module",
+  "bin": {
+    "home-assistant-matter-hub": "./dist/backend/cli.js"
+  },
+  "author": {
+    "email": "t0bst4r@outlook.com",
+    "name": "t0bst4r",
+    "url": "https://github.com/t0bst4r"
+  },
+  "keywords": [
+    "home-assistant",
+    "homeassistant",
+    "home",
+    "assistant",
+    "apple home",
+    "google home",
+    "apple",
+    "google",
+    "alexa",
+    "matter",
+    "matter.js",
+    "matterjs",
+    "project-chip",
+    "smart",
+    "smarthome",
+    "smart-home"
+  ],
+  "bugs": {
+    "url": "https://github.com/t0bst4r/home-assistant-matter-hub/issues"
+  },
+  "funding": {
+    "type": "buymeacoffee",
+    "url": "https://buymeacoffee.com/t0bst4r"
+  },
+  "license": "Apache-2.0",
+  "repository": "github:t0bst4r/home-assistant-matter-hub",
+  "scripts": {
+    "cleanup": "npx rimraf node_modules dist pack LICENSE README.md",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "build": "node build.js",
+    "test": "vitest run",
+    "start": "dotenvx run -f ../../.env -- ./dist/backend/cli.js start",
+    "pack": "mkdir -p pack && npm pack --pack-destination pack --json | jq -r .[0].filename > pack/package-name.txt"
+  },
+  "dependencies": {
+    "@matter/main": "0.12.5",
+    "@matter/nodejs": "0.12.5",
+    "ajv": "8.17.1",
+    "async-lock": "1.4.1",
+    "color": "5.0.0",
+    "express": "5.0.1",
+    "express-basic-auth": "1.2.1",
+    "express-ip-access-control": "1.1.3",
+    "home-assistant-js-websocket": "9.4.0",
+    "lodash": "4.17.21",
+    "nocache": "4.0.0",
+    "rxjs": "7.8.2",
+    "strip-color": "0.1.0",
+    "yargs": "17.7.2",
+    "ws": "8.18.1"
+  },
+  "devDependencies": {
+    "@home-assistant-matter-hub/build-utils": "*",
+    "@home-assistant-matter-hub/backend": "*",
+    "@home-assistant-matter-hub/frontend": "*",
+    "@home-assistant-matter-hub/common": "*"
+  },
+  "nx": {
+    "targets": {
+      "start": {
+        "cache": false,
+        "dependsOn": [
+          "build"
+        ]
+      },
+      "pack": {
+        "cache": true,
+        "dependsOn": [
+          "build"
+        ],
+        "outputs": [
+          "{projectRoot}/pack"
+        ]
+      },
+      "build": {
+        "inputs": [
+          "^default",
+          "default",
+          "{workspaceRoot}/README.md",
+          "{workspaceRoot}/LICENSE"
+        ],
+        "outputs": [
+          "{projectRoot}/dist",
+          "{projectRoot}/README.md",
+          "{projectRoot}/LICENSE"
+        ]
+      }
+    }
+  }
+}

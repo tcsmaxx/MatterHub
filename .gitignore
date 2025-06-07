@@ -1,0 +1,20 @@
+# System and OS
+.DS_STORE
+
+# IDEs
+.idea/
+
+# Personal Configs
+.env
+.local-storage/
+.legacy-storage/
+
+# Dependencies
+node_modules/
+
+# Build Results and Caching
+dist/
+.nx/
+
+*.tsbuildinfo
+tmp/
